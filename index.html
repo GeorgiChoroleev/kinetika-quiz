@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кинетика в химията - Викторина</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .quiz-container {
+            padding: 2rem;
+        }
+        
+        .question {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .option {
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .option:hover {
+            border-color: var(--accent);
+            background: #f8fbff;
+        }
+        
+        .option.selected {
+            border-color: var(--accent);
+            background: #e8f4ff;
+        }
+        
+        .feedback {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .correct { background: #d4edda; border: 1px solid #2ecc71; color: #27ae60; }
+        .wrong   { background: #f8d7da; border: 1px solid #e74c3c; color: #c0392b; }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        
+        button {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-next {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .review-item {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .credits {
+            background: #f8f9fa;
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+        
+        .team {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            margin: 1.5rem 0;
+        }
+        
+        .member {
+            background: white;
+            padding: 1.2rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            max-width: 280px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚗️ Кинетика в химията - Викторина</h1>
+        <p>20 въпроса • Подредени от лесни към трудни</p>
+    </header>
+
+    <div class="container">
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="quiz-container">
+            <div class="progress">
+                <div id="progress-bar" style="width: 0%; height:8px; background:#3498db; border-radius:4px;"></div>
+            </div>
+            
+            <div style="text-align: right; color: #666; margin-bottom: 1rem;">
+                Въпрос <span id="current-q">1</span> от <span id="total-q">20</span>
+            </div>
+            
+            <div id="question-text" class="question"></div>
+            <div id="options" class="options"></div>
+            
+            <div id="feedback" class="feedback"></div>
+            
+            <div class="navigation">
+                <button onclick="prevQuestion()" id="btn-prev" style="background:#95a5a6; color:white; display:none;">Предишен</button>
+                <button onclick="nextQuestion()" id="btn-next" class="btn-next">Следващ</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="quiz-container" style="display: none; padding: 2rem;">
+            <h2 style="text-align:center;">Резултат от викторината</h2>
+            
+            <div id="score-circle" style="width: 180px; height: 180px; border-radius: 50%; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; font-weight: bold; color: white;">
+                <div id="score-percentage">0%</div>
+            </div>
+            
+            <div style="text-align:center; font-size:1.4rem; margin:1.5rem 0;">
+                <p>Правилни: <strong id="correct-count" style="color:#27ae60;">0</strong>/20</p>
+                <p>Грешни: <strong id="wrong-count" style="color:#e74c3c;">0</strong></p>
+            </div>
+            
+            <button onclick="showReview()" style="background:#2c3e50; color:white; padding:12px 30px; margin:15px auto; display:block;">
+                Преглед на отговорите + обяснения
+            </button>
+            
+            <button onclick="restartQuiz()" style="background:#3498db; color:white; padding:12px 30px; margin:15px auto; display:block;">
+                Започни отново
+            </button>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="quiz-container" style="display: none;">
+            <h2 style="text-align:center;">Преглед на отговорите</h2>
+            <div id="review-content"></div>
+            
+            <div style="text-align:center; margin-top:2rem;">
+                <button onclick="restartQuiz()" style="background:#2c3e50; color:white; padding:12px 40px;">Започни нова викторина</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credits -->
+    <div class="credits">
+        <h3>За проекта</h3>
+        <button onclick="showCredits()" style="background:#3498db; color:white; margin-bottom:1.5rem;">
+            Виж екипа
+        </button>
+        
+        <div id="team-info" style="display:none;">
+            <div class="team">
+                <div class="member">
+                    <h4>Георги Чоролеев</h4>
+                    <p><strong>Роля:</strong> Основен разработчик и кодар на проекта</p>
+                    <p>Отговорен за реализацията.</p>
+                </div>
+                <div class="member">
+                    <h4>Георги Николов</h4>
+                    <p><strong>Роля:</strong> Дизайнер на сайта и отговорник по тестването</p>
+                    <p>Отговорен за факталогичната вярност и точност на въпросите.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            // === ЛЕСНИ ===
+            {
+                question: "Какво представлява скоростта на химична реакция?",
+                options: ["Промяна в концентрацията на реагент или продукт за единица време", "Общото количество енергия, освободена при реакцията", "Времето за завършване на реакцията", "Температурата на реакцията"],
+                correct: 0,
+                explanation: "Скоростта се дефинира като Δ[концентрация]/Δt."
+            },
+            {
+                question: "Кой фактор обикновено най-силно ускорява химичните реакции?",
+                options: ["Намаляване на налягането", "Увеличаване на температурата", "Намаляване на концентрацията", "Добавяне на инертен газ"],
+                correct: 1,
+                explanation: "Увеличаването на температурата увеличава кинетичната енергия на молекулите и броя ефективни сблъсъци."
+            },
+            {
+                question: "Какво прави катализаторът?",
+                options: ["Увеличава активиращата енергия", "Понижава активиращата енергия", "Променя равновесието", "Консумира се в реакцията"],
+                correct: 1,
+                explanation: "Катализаторът понижава Ea, като предоставя алтернативен път на реакцията."
+            },
+            {
+                question: "Какво е активираща енергия?",
+                options: ["Енергия, освободена при реакция", "Минимална енергия за стартиране на реакция", "Енергия на продуктите", "Разлика между реагенти и продукти"],
+                correct: 1,
+                explanation: "Това е енергийната бариера, която молекулите трябва да преодолеят."
+            },
+
+            // === СРЕДНА СЛОЖНОСТ ===
+            {
+                question: "Според теорията за сблъсъците, реакцията се случва при:",
+                options: ["Всеки сблъсък между молекули", "Ефективни сблъсъци с достатъчна енергия и правилна ориентация", "Само при ниска температура", "Само в присъствие на катализатор"],
+                correct: 1,
+                explanation: "Не всички сблъсъци са ефективни — трябва Ea и правилна геометрия."
+            },
+            {
+                question: "Реакция от първи ред означава, че скоростта зависи от:",
+                options: ["Концентрацията на един реагент на първа степен", "Концентрацията на два реагента", "Температурата", "Повърхността на твърдо вещество"],
+                correct: 0,
+                explanation: "v = k[A]¹"
+            },
+            {
+                question: "Какво представлява полуживотът (t½) при реакция от първи ред?",
+                options: ["Времето, за което концентрацията намалява наполовина", "Времето за пълно завършване на реакцията", "Времето до равновесие", "Времето за удвояване на концентрацията"],
+                correct: 0,
+                explanation: "При реакции от 1-ви ред t½ е константа и не зависи от началната концентрация."
+            },
+            {
+                question: "Кое ще увеличи скоростта на хетерогенна реакция (твърдо + разтвор)?",
+                options: ["Намаляване на повърхността", "Увеличаване на концентрацията на разтвора", "Намаляване на температурата", "Добавяне на инхибитор"],
+                correct: 1,
+                explanation: "По-голяма концентрация → повече сблъсъци."
+            },
+            {
+                question: "Законът на Арениус показва зависимостта на скоростната константа k от:",
+                options: ["Само концентрацията", "Температурата и активиращата енергия", "Налягането", "Обема на съда"],
+                correct: 1,
+                explanation: "k = A · e^(-Ea/RT)"
+            },
+
+            // === ТРУДНИ ===
+            {
+                question: "При реакция от втори ред (2A → продукти) полуживотът зависи от:",
+                options: ["Не зависи от концентрацията", "Обратно пропорционален на началната концентрация", "Директно пропорционален на началната концентрация", "Логаритмично"],
+                correct: 1,
+                explanation: "t½ = 1/(k[A]₀) — колкото по-висока е началната концентрация, толкова по-кратък е полуживотът."
+            },
+            {
+                question: "Кое от следните е вярно за скорост-определящата стъпка в механизъм на реакция?",
+                options: ["Тя е най-бързата стъпка", "Тя е най-бавната стъпка", "Тя не влияе на общата скорост", "Винаги е първата стъпка"],
+                correct: 1,
+                explanation: "Най-бавната стъпка определя общата скорост на реакцията."
+            },
+            {
+                question: "Какво се случва с активиращата енергия при използване на ензим?",
+                options: ["Увеличава се", "Намалява значително", "Остава същата", "Става нула"],
+                correct: 1,
+                explanation: "Ензимите са биологични катализатори, които силно понижават Ea."
+            },
+            {
+                question: "Ако реакцията е от нулев ред, скоростта зависи от:",
+                options: ["Концентрацията на реагентите", "Не зависи от концентрацията (постоянна е)", "Температурата единствено", "Налягането"],
+                correct: 1,
+                explanation: "v = k (при нулев ред). Често се наблюдава при хетерогенен катализ."
+            },
+            {
+                question: "Кое твърдение е вярно за преходното състояние?",
+                options: ["То е стабилен междинен продукт", "То е най-високата енергийна точка по реакционния път", "То се натрупва в големи количества", "То съществува дълго време"],
+                correct: 1,
+                explanation: "Преходното състояние (activated complex) е нестабилно и се намира на върха на енергийната бариера."
+            },
+            {
+                question: "При увеличаване на температурата с 10°C, скоростта на повечето реакции се:",
+                options: ["Удвоява", "Намалява наполовина", "Не се променя", "Увеличава 10 пъти"],
+                correct: 0,
+                explanation: "Правилото на Вант Хоф — скоростта обикновено се удвоява или утроява при +10°C."
+            },
+            {
+                question: "Какво представлява псевдо-първи ред реакция?",
+                options: ["Реакция, при която един реагент е в голям излишък", "Реакция от нулев ред", "Реакция с два реагента от първи ред", "Реакция без катализатор"],
+                correct: 0,
+                explanation: "Когато един реагент е в голям излишък, реакцията изглежда като от първи ред спрямо другия."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let userAnswers = new Array(questions.length).fill(null);
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            
+            document.getElementById('question-text').innerHTML = `<strong>${currentQuestion + 1}.</strong> ${q.question}`;
+            
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            
+            q.options.forEach((option, index) => {
+                const div = document.createElement('div');
+                div.className = 'option';
+                div.textContent = option;
+                div.onclick = () => selectAnswer(index);
+                
+                if (userAnswers[currentQuestion] === index) div.classList.add('selected');
+                
+                optionsDiv.appendChild(div);
+            });
+            
+            const progress = ((currentQuestion) / questions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            
+            document.getElementById('current-q').textContent = currentQuestion + 1;
+            document.getElementById('total-q').textContent = questions.length;
+            
+            document.getElementById('btn-prev').style.display = currentQuestion > 0 ? 'block' : 'none';
+            
+            const nextBtn = document.getElementById('btn-next');
+            nextBtn.textContent = currentQuestion === questions.length - 1 ? 'Завърши викторината' : 'Следващ';
+            
+            document.getElementById('feedback').style.display = 'none';
+        }
+
+        function selectAnswer(index) {
+            userAnswers[currentQuestion] = index;
+            loadQuestion();
+        }
+
+        function nextQuestion() {
+            if (userAnswers[currentQuestion] === null) {
+                alert("Моля, изберете отговор, преди да продължите!");
+                return;
+            }
+            
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+            }
+        }
+
+        function calculateScore() {
+            return userAnswers.filter((answer, i) => answer === questions[i].correct).length;
+        }
+
+        function showResults() {
+            const correctCount = calculateScore();
+            const total = questions.length;
+            const percentage = Math.round((correctCount / total) * 100);
+            
+            document.getElementById('quiz-screen').style.display = 'none';
+            document.getElementById('results-screen').style.display = 'block';
+            
+            document.getElementById('correct-count').textContent = correctCount;
+            document.getElementById('wrong-count').textContent = total - correctCount;
+            document.getElementById('score-percentage').textContent = percentage + '%';
+            
+            const circle = document.getElementById('score-circle');
+            if (percentage >= 80) circle.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+            else if (percentage >= 60) circle.style.background = 'linear-gradient(135deg, #f1c40f, #f39c12)';
+            else circle.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+        }
+
+        function showReview() {
+            document.getElementById('results-screen').style.display = 'none';
+            const reviewScreen = document.getElementById('review-screen');
+            reviewScreen.style.display = 'block';
+            
+            let html = '';
+            questions.forEach((q, i) => {
+                const userAns = userAnswers[i];
+                const isCorrect = userAns === q.correct;
+                
+                html += `
+                <div class="review-item">
+                    <p><strong>${i+1}. ${q.question}</strong></p>
+                    <p><strong>Вашият отговор:</strong> ${userAns !== null ? q.options[userAns] : '—'}</p>
+                    <p><strong>Верен отговор:</strong> <span style="color:#27ae60;">${q.options[q.correct]}</span></p>
+                    <div style="margin-top:12px; padding:14px; background:${isCorrect ? '#d4edda' : '#f8d7da'}; border-radius:8px; font-size:1.05rem;">
+                        <strong>${isCorrect ? '✅ Правилно!' : '❌ Грешно'}</strong><br><br>
+                        ${q.explanation}
+                    </div>
+                </div>`;
+            });
+            
+            document.getElementById('review-content').innerHTML = html;
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            userAnswers = new Array(questions.length).fill(null);
+            
+            document.getElementById('quiz-screen').style.display = 'block';
+            document.getElementById('results-screen').style.display = 'none';
+            document.getElementById('review-screen').style.display = 'none';
+            
+            loadQuestion();
+        }
+
+        function showCredits() {
+            const team = document.getElementById('team-info');
+            team.style.display = team.style.display === 'none' ? 'block' : 'none';
+        }
+
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>
